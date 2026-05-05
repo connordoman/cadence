@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -12,7 +13,28 @@ var (
 	ErrUnexpectedChar = errors.New("unexpected character")
 	ErrInvalidInteger = errors.New("invalid integer")
 	ErrInvalidDate    = errors.New("invalid date")
+	ErrUnknownKeyword = errors.New("unknown keyword")
 )
+
+var keywords = map[string]TokenType{
+	"EVERY":    EVERY,
+	"WEEK":     WEEK,
+	"WEEKS":    WEEK,
+	"MONTH":    MONTH,
+	"MONTHS":   MONTH,
+	"ON":       ON,
+	"MON":      MON,
+	"TUE":      TUE,
+	"WED":      WED,
+	"THU":      THU,
+	"FRI":      FRI,
+	"SAT":      SAT,
+	"SUN":      SUN,
+	"WEEKDAY":  WEEKDAY,
+	"WEEKDAYS": WEEKDAY,
+	"FROM":     FROM,
+	"TO":       TO,
+}
 
 type Scanner struct {
 	source  string
@@ -75,12 +97,28 @@ func (s *Scanner) scanToken() error {
 			} else {
 				return s.integer()
 			}
+		} else if s.isAlpha(char) {
+			return s.keyword()
 		} else {
 			return ErrUnexpectedChar
 		}
 	}
 
 	return nil
+}
+
+func (s *Scanner) keyword() error {
+	for s.isAlpha(s.peek()) {
+		s.advance()
+	}
+
+	text := strings.ToUpper(s.source[s.start:s.current])
+	if keyword, ok := keywords[text]; ok {
+		s.emptyToken(keyword)
+		return nil
+	}
+
+	return s.report(ErrUnknownKeyword, "'%s'", text)
 }
 
 func (s *Scanner) integer() error {
@@ -158,6 +196,10 @@ func (s *Scanner) peekAhead(offset int) rune {
 		return '\000'
 	}
 	return rune(s.source[s.current+offset])
+}
+
+func (s *Scanner) isAlpha(char rune) bool {
+	return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z')
 }
 
 func (s *Scanner) isDigit(char rune) bool {

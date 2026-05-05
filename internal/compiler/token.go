@@ -13,7 +13,6 @@ const (
 
 	// Single-character tokens
 	COMMA
-	HYPHEN
 
 	// Keywords
 	EVERY
@@ -42,8 +41,6 @@ func (t TokenType) String() string {
 		return "DATE"
 	case COMMA:
 		return "COMMA"
-	case HYPHEN:
-		return "HYPHEN"
 	case EVERY:
 		return "EVERY"
 	case WEEK:
@@ -94,5 +91,5 @@ func NewToken(tokenType TokenType, lexeme string, literal any, line int) Token {
 }
 
 func (t Token) String() string {
-	return fmt.Sprintf("%s %s %v", t.Type, t.Lexeme, t.Literal)
+	return fmt.Sprintf("%s '%s' %v", t.Type, t.Lexeme, t.Literal)
 }
