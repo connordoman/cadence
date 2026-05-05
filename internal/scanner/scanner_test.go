@@ -1,4 +1,4 @@
-package compiler_test
+package scanner_test
 
 import (
 	"errors"
@@ -6,25 +6,25 @@ import (
 	"testing"
 	"time"
 
-	"github.com/connordoman/cadence/internal/compiler"
+	"github.com/connordoman/cadence/internal/scanner"
 )
 
 var (
-	EOFToken = compiler.Token{Type: compiler.EOF, Lexeme: "", Literal: nil, Line: 1}
+	EOFToken = scanner.Token{Type: scanner.EOF, Lexeme: "", Literal: nil, Line: 1}
 )
 
 func TestScanner(t *testing.T) {
 	tests := []struct {
 		name           string
 		input          string
-		expectedTokens []compiler.Token
+		expectedTokens []scanner.Token
 		expectedError  error
 	}{
 		{
 			name:  "simple integer",
 			input: "123",
-			expectedTokens: []compiler.Token{
-				{Type: compiler.INTEGER, Lexeme: "123", Literal: 123, Line: 1},
+			expectedTokens: []scanner.Token{
+				{Type: scanner.INTEGER, Lexeme: "123", Literal: 123, Line: 1},
 				EOFToken,
 			},
 			expectedError: nil,
@@ -32,8 +32,8 @@ func TestScanner(t *testing.T) {
 		{
 			name:  "simple date",
 			input: "01-01-2026",
-			expectedTokens: []compiler.Token{
-				{Type: compiler.DATE, Lexeme: "01-01-2026", Literal: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), Line: 1},
+			expectedTokens: []scanner.Token{
+				{Type: scanner.DATE, Lexeme: "01-01-2026", Literal: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), Line: 1},
 				EOFToken,
 			},
 			expectedError: nil,
@@ -41,9 +41,9 @@ func TestScanner(t *testing.T) {
 		{
 			name:  "digit then date",
 			input: "123 01-01-2026",
-			expectedTokens: []compiler.Token{
-				{Type: compiler.INTEGER, Lexeme: "123", Literal: 123, Line: 1},
-				{Type: compiler.DATE, Lexeme: "01-01-2026", Literal: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), Line: 1},
+			expectedTokens: []scanner.Token{
+				{Type: scanner.INTEGER, Lexeme: "123", Literal: 123, Line: 1},
+				{Type: scanner.DATE, Lexeme: "01-01-2026", Literal: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), Line: 1},
 				EOFToken,
 			},
 			expectedError: nil,
@@ -52,19 +52,19 @@ func TestScanner(t *testing.T) {
 			name:           "impossible date",
 			input:          "32-01-2026",
 			expectedTokens: nil,
-			expectedError:  compiler.ErrInvalidDate,
+			expectedError:  scanner.ErrInvalidDate,
 		},
 		{
 			name:           "unknown keyword",
 			input:          "EVERYDAY",
 			expectedTokens: nil,
-			expectedError:  compiler.ErrUnknownKeyword,
+			expectedError:  scanner.ErrUnknownKeyword,
 		},
 		{
 			name:  "keyword every",
 			input: "EVERY",
-			expectedTokens: []compiler.Token{
-				{Type: compiler.EVERY, Lexeme: "EVERY", Literal: nil, Line: 1},
+			expectedTokens: []scanner.Token{
+				{Type: scanner.EVERY, Lexeme: "EVERY", Literal: nil, Line: 1},
 				EOFToken,
 			},
 			expectedError: nil,
@@ -72,18 +72,18 @@ func TestScanner(t *testing.T) {
 		{
 			name:  "keyword week",
 			input: "WEEK",
-			expectedTokens: []compiler.Token{
-				{Type: compiler.WEEK, Lexeme: "WEEK", Literal: nil, Line: 1},
+			expectedTokens: []scanner.Token{
+				{Type: scanner.WEEK, Lexeme: "WEEK", Literal: nil, Line: 1},
 				EOFToken,
 			},
 		},
 		{
 			name:  "keyword plurals",
 			input: "WEEKS MONTHS WEEKDAYS",
-			expectedTokens: []compiler.Token{
-				{Type: compiler.WEEK, Lexeme: "WEEKS", Literal: nil, Line: 1},
-				{Type: compiler.MONTH, Lexeme: "MONTHS", Literal: nil, Line: 1},
-				{Type: compiler.WEEKDAY, Lexeme: "WEEKDAYS", Literal: nil, Line: 1},
+			expectedTokens: []scanner.Token{
+				{Type: scanner.WEEK, Lexeme: "WEEKS", Literal: nil, Line: 1},
+				{Type: scanner.MONTH, Lexeme: "MONTHS", Literal: nil, Line: 1},
+				{Type: scanner.WEEKDAY, Lexeme: "WEEKDAYS", Literal: nil, Line: 1},
 				EOFToken,
 			},
 			expectedError: nil,
@@ -91,9 +91,9 @@ func TestScanner(t *testing.T) {
 		{
 			name:  "keyword case sensitivity",
 			input: "every week",
-			expectedTokens: []compiler.Token{
-				{Type: compiler.EVERY, Lexeme: "every", Literal: nil, Line: 1},
-				{Type: compiler.WEEK, Lexeme: "week", Literal: nil, Line: 1},
+			expectedTokens: []scanner.Token{
+				{Type: scanner.EVERY, Lexeme: "every", Literal: nil, Line: 1},
+				{Type: scanner.WEEK, Lexeme: "week", Literal: nil, Line: 1},
 				EOFToken,
 			},
 			expectedError: nil,
@@ -101,13 +101,13 @@ func TestScanner(t *testing.T) {
 		{
 			name:  "comma-separated days",
 			input: "EVERY MON, TUE, WED",
-			expectedTokens: []compiler.Token{
-				{Type: compiler.EVERY, Lexeme: "EVERY", Literal: nil, Line: 1},
-				{Type: compiler.MON, Lexeme: "MON", Literal: nil, Line: 1},
-				{Type: compiler.COMMA, Lexeme: ",", Literal: nil, Line: 1},
-				{Type: compiler.TUE, Lexeme: "TUE", Literal: nil, Line: 1},
-				{Type: compiler.COMMA, Lexeme: ",", Literal: nil, Line: 1},
-				{Type: compiler.WED, Lexeme: "WED", Literal: nil, Line: 1},
+			expectedTokens: []scanner.Token{
+				{Type: scanner.EVERY, Lexeme: "EVERY", Literal: nil, Line: 1},
+				{Type: scanner.MON, Lexeme: "MON", Literal: nil, Line: 1},
+				{Type: scanner.COMMA, Lexeme: ",", Literal: nil, Line: 1},
+				{Type: scanner.TUE, Lexeme: "TUE", Literal: nil, Line: 1},
+				{Type: scanner.COMMA, Lexeme: ",", Literal: nil, Line: 1},
+				{Type: scanner.WED, Lexeme: "WED", Literal: nil, Line: 1},
 				EOFToken,
 			},
 			expectedError: nil,
@@ -116,7 +116,7 @@ func TestScanner(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			scanner := compiler.NewScanner(test.input)
+			scanner := scanner.NewScanner(test.input)
 			tokens, err := scanner.Scan()
 			if err != nil {
 				if test.expectedError != nil {

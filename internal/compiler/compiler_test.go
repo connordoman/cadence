@@ -5,38 +5,39 @@ import (
 	"testing"
 
 	"github.com/connordoman/cadence/internal/compiler"
+	"github.com/connordoman/cadence/internal/scanner"
 )
 
 func TestCompile(t *testing.T) {
 	tests := []struct {
 		name           string
 		input          string
-		expectedTokens []compiler.Token
+		expectedTokens []scanner.Token
 	}{
 		{
 			name:  "simple every monday",
 			input: "EVERY MON",
-			expectedTokens: []compiler.Token{
-				{Type: compiler.EVERY, Lexeme: "EVERY", Literal: nil, Line: 1},
-				{Type: compiler.MON, Lexeme: "MON", Literal: nil, Line: 1},
+			expectedTokens: []scanner.Token{
+				{Type: scanner.EVERY, Lexeme: "EVERY", Literal: nil, Line: 1},
+				{Type: scanner.MON, Lexeme: "MON", Literal: nil, Line: 1},
 			},
 		},
 		{
 			name:  "simple every week",
 			input: "EVERY MON, TUE",
-			expectedTokens: []compiler.Token{
-				{Type: compiler.EVERY, Lexeme: "EVERY", Literal: nil, Line: 1},
-				{Type: compiler.MON, Lexeme: "MON", Literal: nil, Line: 1},
-				{Type: compiler.COMMA, Lexeme: ",", Literal: nil, Line: 1},
-				{Type: compiler.TUE, Lexeme: "TUE", Literal: nil, Line: 1},
+			expectedTokens: []scanner.Token{
+				{Type: scanner.EVERY, Lexeme: "EVERY", Literal: nil, Line: 1},
+				{Type: scanner.MON, Lexeme: "MON", Literal: nil, Line: 1},
+				{Type: scanner.COMMA, Lexeme: ",", Literal: nil, Line: 1},
+				{Type: scanner.TUE, Lexeme: "TUE", Literal: nil, Line: 1},
 			},
 		},
 		{
 			name:  "simple every weekday",
 			input: "EVERY WEEKDAY",
-			expectedTokens: []compiler.Token{
-				{Type: compiler.EVERY, Lexeme: "EVERY", Literal: nil, Line: 1},
-				{Type: compiler.WEEKDAY, Lexeme: "WEEKDAY", Literal: nil, Line: 1},
+			expectedTokens: []scanner.Token{
+				{Type: scanner.EVERY, Lexeme: "EVERY", Literal: nil, Line: 1},
+				{Type: scanner.WEEKDAY, Lexeme: "WEEKDAY", Literal: nil, Line: 1},
 			},
 		},
 	}
