@@ -34,6 +34,8 @@ var keywords = map[string]TokenType{
 	"WEEKDAYS": WEEKDAY,
 	"FROM":     FROM,
 	"TO":       TO,
+	"FIRST":    FIRST,
+	"LAST":     LAST,
 }
 
 type Scanner struct {

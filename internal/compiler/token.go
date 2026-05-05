@@ -29,6 +29,8 @@ const (
 	WEEKDAY
 	FROM
 	TO
+	FIRST
+	LAST
 )
 
 func (t TokenType) String() string {
@@ -69,6 +71,10 @@ func (t TokenType) String() string {
 		return "FROM"
 	case TO:
 		return "TO"
+	case FIRST:
+		return "FIRST"
+	case LAST:
+		return "LAST"
 	default:
 		return "UNKNOWN"
 	}
