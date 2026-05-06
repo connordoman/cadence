@@ -18,6 +18,8 @@ var (
 
 var keywords = map[string]TokenType{
 	"EVERY":    EVERY,
+	"DAY":      DAY,
+	"DAYS":     DAY,
 	"WEEK":     WEEK,
 	"WEEKS":    WEEK,
 	"MONTH":    MONTH,

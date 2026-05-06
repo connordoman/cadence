@@ -1,0 +1,357 @@
+package parser
+
+import (
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/connordoman/cadence/internal/scanner"
+)
+
+var (
+	ErrParse = errors.New("parse error")
+)
+
+type Parser struct {
+	Tokens  []scanner.Token
+	Current int
+	Errors  []error
+}
+
+func NewParser(tokens []scanner.Token) *Parser {
+	return &Parser{
+		Tokens:  tokens,
+		Current: 0,
+	}
+}
+
+func (p *Parser) Error(err error) error {
+	p.Errors = append(p.Errors, err)
+	return err
+}
+
+func (p *Parser) ErrExpected(expected string, got string) error {
+	return p.Error(fmt.Errorf("expected %s, got '%s'", expected, got))
+}
+
+func (p *Parser) ErrNested(msg string, err error) error {
+	p.Error(fmt.Errorf("%s", msg))
+	return err
+}
+
+func (p *Parser) Parse() (*Expression, error) {
+	expr, err := p.expression()
+	if err != nil {
+		fmt.Println("Parser error:")
+		for i, err := range p.Errors {
+			fmt.Println(i, ":", err)
+		}
+		return nil, ErrParse
+	}
+	return expr, nil
+}
+
+func (p *Parser) expression() (*Expression, error) {
+	if !p.matchSome(scanner.EVERY) {
+		return nil, p.ErrExpected("'EVERY'", p.peek().Type.String())
+	}
+
+	expr := &Expression{}
+
+	if p.checkSome(scanner.INTEGER, scanner.DAY, scanner.WEEK, scanner.MONTH) {
+		explicitInterval, selector, err := p.explicitSchedule()
+		if err != nil {
+			return nil, p.ErrNested("explicit schedule", err)
+		}
+
+		expr.Interval = explicitInterval
+		expr.Selector = selector
+	} else {
+		implicitSchedule, err := p.implicitSchedule()
+		if err != nil {
+			return nil, p.ErrNested("implicit schedule", err)
+		}
+		expr.Interval = &IntervalSpec{
+			Count: 1,
+			Unit:  UnitWeek,
+		}
+		expr.Selector = implicitSchedule
+	}
+
+	if p.check(scanner.FROM) {
+		dateRange, err := p.dateRange()
+		if err != nil {
+			return nil, p.ErrNested("date range", err)
+		}
+		expr.DateRange = dateRange
+	}
+
+	return expr, nil
+}
+
+func (p *Parser) day() (Day, error) {
+	if p.matchSome(scanner.MON, scanner.TUE, scanner.WED, scanner.THU, scanner.FRI, scanner.SAT, scanner.SUN) {
+		prev := p.previous()
+		switch prev.Type {
+		case scanner.MON:
+			return Monday, nil
+		case scanner.TUE:
+			return Tuesday, nil
+		case scanner.WED:
+			return Wednesday, nil
+		case scanner.THU:
+			return Thursday, nil
+		case scanner.FRI:
+			return Friday, nil
+		case scanner.SAT:
+			return Saturday, nil
+		case scanner.SUN:
+			return Sunday, nil
+		default:
+			return -1, fmt.Errorf("invalid day: %s", prev.Type)
+		}
+	}
+
+	return -1, p.ErrExpected("day", p.peek().Type.String())
+}
+
+func (p *Parser) distinction() (Distinction, error) {
+	if p.matchSome(scanner.FIRST, scanner.LAST) {
+		prev := p.previous()
+		switch prev.Type {
+		case scanner.FIRST:
+			return First, nil
+		case scanner.LAST:
+			return Last, nil
+		default:
+			return -1, fmt.Errorf("invalid distinction: %s", prev.Type)
+		}
+	}
+
+	return -1, p.ErrExpected("distinction", p.peek().Type.String())
+}
+
+func (p *Parser) ordinalDay() (*OrdinalDay, error) {
+	distinction, err := p.distinction()
+	if err != nil {
+		return nil, err
+	}
+
+	day, err := p.day()
+	if err != nil {
+		return nil, err
+	}
+
+	return &OrdinalDay{
+		Distinction: distinction,
+		Day:         day,
+	}, nil
+}
+
+func (p *Parser) dayList() (*DayListSelector, error) {
+	days := []Day{}
+
+	first, err := p.day()
+	if err != nil {
+		return nil, err
+	}
+
+	days = append(days, first)
+
+	for p.matchSome(scanner.COMMA) {
+		day, err := p.day()
+		if err != nil {
+			return nil, err
+		}
+
+		days = append(days, day)
+	}
+
+	return &DayListSelector{
+		Days: days,
+	}, nil
+}
+
+func (p *Parser) ordinalDayList() (*OrdinalDayListSelector, error) {
+	items := []OrdinalDay{}
+
+	first, err := p.ordinalDay()
+	if err != nil {
+		return nil, err
+	}
+
+	items = append(items, *first)
+
+	for p.matchSome(scanner.COMMA) {
+		item, err := p.ordinalDay()
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, *item)
+	}
+
+	return &OrdinalDayListSelector{
+		Items: items,
+	}, nil
+}
+
+func (p *Parser) selector() (Selector, error) {
+	if p.matchSome(scanner.WEEKDAY) {
+		return &WeekdaysSelector{}, nil
+	}
+
+	if p.check(scanner.FIRST) || p.check(scanner.LAST) {
+		item, err := p.ordinalDayList()
+		if err != nil {
+			return nil, p.ErrNested("ordinal day list", err)
+		}
+
+		return item, nil
+	}
+
+	return p.dayList()
+}
+
+func (p *Parser) unit() (Unit, error) {
+	if p.matchSome(scanner.DAY, scanner.WEEK, scanner.MONTH) {
+		prev := p.previous()
+		switch prev.Type {
+		case scanner.DAY:
+			return UnitDay, nil
+		case scanner.WEEK:
+			return UnitWeek, nil
+		case scanner.MONTH:
+			return UnitMonth, nil
+		default:
+			return -1, fmt.Errorf("invalid unit: %s", prev.Type)
+		}
+	}
+
+	return -1, p.ErrExpected("unit", p.peek().Type.String())
+}
+
+func (p *Parser) intervalSpec() (*IntervalSpec, error) {
+	count := 1
+	if p.matchSome(scanner.INTEGER) {
+		count = p.previous().Literal.(int)
+	}
+
+	unit, err := p.unit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &IntervalSpec{
+		Count: count,
+		Unit:  unit,
+	}, nil
+}
+
+func (p *Parser) explicitSchedule() (*IntervalSpec, Selector, error) {
+	interval, err := p.intervalSpec()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	if !p.matchSome(scanner.ON) {
+		return nil, nil, p.ErrExpected("'ON'", p.peek().Type.String())
+	}
+
+	selector, err := p.selector()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return interval, selector, nil
+}
+
+func (p *Parser) implicitSchedule() (Selector, error) {
+	selector, err := p.selector()
+	if err != nil {
+		return nil, p.ErrNested("selector", err)
+	}
+
+	return selector, nil
+}
+
+func (p *Parser) dateRange() (*DateRange, error) {
+	if !p.matchSome(scanner.FROM) {
+		return nil, p.ErrExpected("'FROM'", p.peek().Type.String())
+	}
+
+	fromDate, err := p.date()
+	if err != nil {
+		return nil, p.ErrNested("from date", err)
+	}
+
+	var toDate *time.Time
+
+	if p.matchSome(scanner.TO) {
+		date, err := p.date()
+		if err != nil {
+			return nil, p.ErrNested("to date", err)
+		}
+		toDate = &date
+	}
+
+	return &DateRange{
+		From: fromDate,
+		To:   toDate,
+	}, nil
+}
+
+func (p *Parser) date() (time.Time, error) {
+	if !p.matchSome(scanner.DATE) {
+		return time.Time{}, p.ErrExpected("date", p.peek().Type.String())
+	}
+
+	return p.previous().Literal.(time.Time), nil
+}
+
+func (p *Parser) matchSome(tokenTypes ...scanner.TokenType) bool {
+	for _, tokenType := range tokenTypes {
+		if p.check(tokenType) {
+			p.advance()
+			return true
+		}
+	}
+
+	return false
+}
+
+func (p *Parser) check(tokenType scanner.TokenType) bool {
+	if p.isAtEnd() {
+		return false
+	}
+
+	return p.peek().Type == tokenType
+}
+
+func (p *Parser) checkSome(tokenTypes ...scanner.TokenType) bool {
+	for _, tokenType := range tokenTypes {
+		if p.check(tokenType) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Parser) advance() scanner.Token {
+	if !p.isAtEnd() {
+		p.Current++
+	}
+	return p.previous()
+}
+
+func (p *Parser) isAtEnd() bool {
+	return p.peek().Type == scanner.EOF
+}
+
+func (p *Parser) peek() scanner.Token {
+	return p.Tokens[p.Current]
+}
+
+func (p *Parser) previous() scanner.Token {
+	return p.Tokens[p.Current-1]
+}

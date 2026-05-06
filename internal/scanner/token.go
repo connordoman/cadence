@@ -16,6 +16,7 @@ const (
 
 	// Keywords
 	EVERY
+	DAY
 	WEEK
 	MONTH
 	ON
@@ -45,6 +46,8 @@ func (t TokenType) String() string {
 		return "COMMA"
 	case EVERY:
 		return "EVERY"
+	case DAY:
+		return "DAY"
 	case WEEK:
 		return "WEEK"
 	case MONTH:

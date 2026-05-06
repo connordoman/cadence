@@ -27,7 +27,7 @@ func Print(e *Expression) string {
 func (p *Printer) VisitExpression(e *Expression) (any, error) {
 	var parts []string
 
-	parts = append(parts, "EVERY")
+	parts = append(parts, "[EVERY]")
 
 	if e.Interval != nil {
 		interval, err := e.Interval.Accept(p)
@@ -59,7 +59,7 @@ func (p *Printer) VisitExpression(e *Expression) (any, error) {
 		parts = append(parts, dateRange.(string))
 	}
 
-	return strings.Join(parts, " "), nil
+	return "[EXPRESSION: " + strings.Join(parts, " ") + "]", nil
 }
 
 // Interval
@@ -71,11 +71,7 @@ func (p *Printer) VisitInterval(i *IntervalSpec) (any, error) {
 	}
 	unit := i.Unit.String()
 
-	if count == 1 {
-		return unit, nil
-	}
-
-	return fmt.Sprintf("%d %s", count, unit), nil
+	return fmt.Sprintf("[INTERVAL: %d %s]", count, unit), nil
 }
 
 // Selectors
@@ -89,7 +85,7 @@ func (p *Printer) VisitDayList(d *DayListSelector) (any, error) {
 	for _, day := range d.Days {
 		parts = append(parts, day.String())
 	}
-	return strings.Join(parts, ", "), nil
+	return "[DAY LIST: " + strings.Join(parts, ", ") + "]", nil
 }
 
 func (p *Printer) VisitOrdinalDayList(o *OrdinalDayListSelector) (any, error) {
@@ -97,7 +93,7 @@ func (p *Printer) VisitOrdinalDayList(o *OrdinalDayListSelector) (any, error) {
 	for _, item := range o.Items {
 		parts = append(parts, fmt.Sprintf("%s %s", item.Distinction.String(), item.Day.String()))
 	}
-	return strings.Join(parts, ", "), nil
+	return "[ORDINAL DAY LIST: " + strings.Join(parts, ", ") + "]", nil
 }
 
 // Date Range
@@ -105,11 +101,11 @@ func (p *Printer) VisitOrdinalDayList(o *OrdinalDayListSelector) (any, error) {
 func (p *Printer) VisitDateRange(d *DateRange) (any, error) {
 	var result strings.Builder
 	from := d.From.Format("02-01-2006")
-	fmt.Fprintf(&result, "FROM %s", from)
+	fmt.Fprintf(&result, "%s", from)
 	to := ""
 	if d.To != nil {
 		to = d.To.Format("02-01-2006")
-		fmt.Fprintf(&result, " TO %s", to)
+		fmt.Fprintf(&result, "...%s", to)
 	}
-	return result.String(), nil
+	return "[DATE RANGE: " + result.String() + "]", nil
 }
