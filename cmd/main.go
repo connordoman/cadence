@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/connordoman/cadence/internal/compiler"
-	"github.com/connordoman/cadence/internal/parser"
+	"github.com/connordoman/cadence/internal/expr"
 )
 
 func main() {
@@ -19,13 +19,13 @@ func main() {
 	input := os.Args[1]
 
 	comp := compiler.NewCompiler(input)
-	expr, err := comp.Compile()
+	expression, err := comp.Compile()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Println(parser.Print(expr))
+	fmt.Println(expr.Print(expression))
 }
 
 func repl() {
@@ -43,12 +43,12 @@ func repl() {
 			break
 		}
 		comp := compiler.NewCompiler(line)
-		expr, err := comp.Compile()
+		expression, err := comp.Compile()
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 			continue
 		}
-		fmt.Println(parser.Print(expr))
+		fmt.Println(expr.Print(expression))
 	}
 	fmt.Println("Bye!")
 }

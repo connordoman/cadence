@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"github.com/connordoman/cadence/internal/expr"
 	"github.com/connordoman/cadence/internal/parser"
 	"github.com/connordoman/cadence/internal/scanner"
 )
@@ -17,17 +18,17 @@ func NewCompiler(source string) *Compiler {
 	}
 }
 
-func (c *Compiler) Compile() (*parser.Expression, error) {
+func (c *Compiler) Compile() (*expr.Expression, error) {
 	scanner := scanner.NewScanner(c.source)
 	tokens, err := scanner.Scan()
 	if err != nil {
 		return nil, err
 	}
 	parser := parser.NewParser(tokens)
-	expr, err := parser.Parse()
+	expression, err := parser.Parse()
 	if err != nil {
 		return nil, err
 	}
 
-	return expr, nil
+	return expression, nil
 }

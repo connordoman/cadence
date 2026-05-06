@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/connordoman/cadence/internal/expr"
 	"github.com/connordoman/cadence/internal/scanner"
 )
 
@@ -39,7 +40,7 @@ func (p *Parser) ErrNested(msg string, err error) error {
 	return err
 }
 
-func (p *Parser) Parse() (*Expression, error) {
+func (p *Parser) Parse() (*expr.Expression, error) {
 	expr, err := p.expression()
 	if err != nil {
 		fmt.Println("Parser error:")
@@ -51,12 +52,12 @@ func (p *Parser) Parse() (*Expression, error) {
 	return expr, nil
 }
 
-func (p *Parser) expression() (*Expression, error) {
+func (p *Parser) expression() (*expr.Expression, error) {
 	if !p.matchSome(scanner.EVERY) {
 		return nil, p.ErrExpected("'EVERY'", p.peek().Type.String())
 	}
 
-	expr := &Expression{}
+	expression := &expr.Expression{}
 
 	if p.checkSome(scanner.INTEGER, scanner.DAY, scanner.WEEK, scanner.MONTH) {
 		explicitInterval, selector, err := p.explicitSchedule()
@@ -64,18 +65,18 @@ func (p *Parser) expression() (*Expression, error) {
 			return nil, p.ErrNested("explicit schedule", err)
 		}
 
-		expr.Interval = explicitInterval
-		expr.Selector = selector
+		expression.Interval = explicitInterval
+		expression.Selector = selector
 	} else {
 		implicitSchedule, err := p.implicitSchedule()
 		if err != nil {
 			return nil, p.ErrNested("implicit schedule", err)
 		}
-		expr.Interval = &IntervalSpec{
+		expression.Interval = &expr.IntervalSpec{
 			Count: 1,
-			Unit:  UnitWeek,
+			Unit:  expr.UnitWeek,
 		}
-		expr.Selector = implicitSchedule
+		expression.Selector = implicitSchedule
 	}
 
 	if p.check(scanner.FROM) {
@@ -83,30 +84,30 @@ func (p *Parser) expression() (*Expression, error) {
 		if err != nil {
 			return nil, p.ErrNested("date range", err)
 		}
-		expr.DateRange = dateRange
+		expression.DateRange = dateRange
 	}
 
-	return expr, nil
+	return expression, nil
 }
 
-func (p *Parser) day() (Day, error) {
+func (p *Parser) day() (expr.Day, error) {
 	if p.matchSome(scanner.MON, scanner.TUE, scanner.WED, scanner.THU, scanner.FRI, scanner.SAT, scanner.SUN) {
 		prev := p.previous()
 		switch prev.Type {
 		case scanner.MON:
-			return Monday, nil
+			return expr.Monday, nil
 		case scanner.TUE:
-			return Tuesday, nil
+			return expr.Tuesday, nil
 		case scanner.WED:
-			return Wednesday, nil
+			return expr.Wednesday, nil
 		case scanner.THU:
-			return Thursday, nil
+			return expr.Thursday, nil
 		case scanner.FRI:
-			return Friday, nil
+			return expr.Friday, nil
 		case scanner.SAT:
-			return Saturday, nil
+			return expr.Saturday, nil
 		case scanner.SUN:
-			return Sunday, nil
+			return expr.Sunday, nil
 		default:
 			return -1, fmt.Errorf("invalid day: %s", prev.Type)
 		}
@@ -115,14 +116,14 @@ func (p *Parser) day() (Day, error) {
 	return -1, p.ErrExpected("day", p.peek().Type.String())
 }
 
-func (p *Parser) distinction() (Distinction, error) {
+func (p *Parser) distinction() (expr.Distinction, error) {
 	if p.matchSome(scanner.FIRST, scanner.LAST) {
 		prev := p.previous()
 		switch prev.Type {
 		case scanner.FIRST:
-			return First, nil
+			return expr.First, nil
 		case scanner.LAST:
-			return Last, nil
+			return expr.Last, nil
 		default:
 			return -1, fmt.Errorf("invalid distinction: %s", prev.Type)
 		}
@@ -131,7 +132,7 @@ func (p *Parser) distinction() (Distinction, error) {
 	return -1, p.ErrExpected("distinction", p.peek().Type.String())
 }
 
-func (p *Parser) ordinalDay() (*OrdinalDay, error) {
+func (p *Parser) ordinalDay() (*expr.OrdinalDay, error) {
 	distinction, err := p.distinction()
 	if err != nil {
 		return nil, err
@@ -142,14 +143,14 @@ func (p *Parser) ordinalDay() (*OrdinalDay, error) {
 		return nil, err
 	}
 
-	return &OrdinalDay{
+	return &expr.OrdinalDay{
 		Distinction: distinction,
 		Day:         day,
 	}, nil
 }
 
-func (p *Parser) dayList() (*DayListSelector, error) {
-	days := []Day{}
+func (p *Parser) dayList() (*expr.DayListSelector, error) {
+	days := []expr.Day{}
 
 	first, err := p.day()
 	if err != nil {
@@ -167,13 +168,13 @@ func (p *Parser) dayList() (*DayListSelector, error) {
 		days = append(days, day)
 	}
 
-	return &DayListSelector{
+	return &expr.DayListSelector{
 		Days: days,
 	}, nil
 }
 
-func (p *Parser) ordinalDayList() (*OrdinalDayListSelector, error) {
-	items := []OrdinalDay{}
+func (p *Parser) ordinalDayList() (*expr.OrdinalDayListSelector, error) {
+	items := []expr.OrdinalDay{}
 
 	first, err := p.ordinalDay()
 	if err != nil {
@@ -191,14 +192,14 @@ func (p *Parser) ordinalDayList() (*OrdinalDayListSelector, error) {
 		items = append(items, *item)
 	}
 
-	return &OrdinalDayListSelector{
+	return &expr.OrdinalDayListSelector{
 		Items: items,
 	}, nil
 }
 
-func (p *Parser) selector() (Selector, error) {
+func (p *Parser) selector() (expr.Selector, error) {
 	if p.matchSome(scanner.WEEKDAY) {
-		return &WeekdaysSelector{}, nil
+		return &expr.WeekdaysSelector{}, nil
 	}
 
 	if p.check(scanner.FIRST) || p.check(scanner.LAST) {
@@ -213,16 +214,16 @@ func (p *Parser) selector() (Selector, error) {
 	return p.dayList()
 }
 
-func (p *Parser) unit() (Unit, error) {
+func (p *Parser) unit() (expr.Unit, error) {
 	if p.matchSome(scanner.DAY, scanner.WEEK, scanner.MONTH) {
 		prev := p.previous()
 		switch prev.Type {
 		case scanner.DAY:
-			return UnitDay, nil
+			return expr.UnitDay, nil
 		case scanner.WEEK:
-			return UnitWeek, nil
+			return expr.UnitWeek, nil
 		case scanner.MONTH:
-			return UnitMonth, nil
+			return expr.UnitMonth, nil
 		default:
 			return -1, fmt.Errorf("invalid unit: %s", prev.Type)
 		}
@@ -231,7 +232,7 @@ func (p *Parser) unit() (Unit, error) {
 	return -1, p.ErrExpected("unit", p.peek().Type.String())
 }
 
-func (p *Parser) intervalSpec() (*IntervalSpec, error) {
+func (p *Parser) intervalSpec() (*expr.IntervalSpec, error) {
 	count := 1
 	if p.matchSome(scanner.INTEGER) {
 		count = p.previous().Literal.(int)
@@ -242,31 +243,33 @@ func (p *Parser) intervalSpec() (*IntervalSpec, error) {
 		return nil, err
 	}
 
-	return &IntervalSpec{
+	return &expr.IntervalSpec{
 		Count: count,
 		Unit:  unit,
 	}, nil
 }
 
-func (p *Parser) explicitSchedule() (*IntervalSpec, Selector, error) {
+func (p *Parser) explicitSchedule() (*expr.IntervalSpec, expr.Selector, error) {
 	interval, err := p.intervalSpec()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	if !p.matchSome(scanner.ON) {
-		return nil, nil, p.ErrExpected("'ON'", p.peek().Type.String())
-	}
+	var selector expr.Selector
 
-	selector, err := p.selector()
-	if err != nil {
-		return nil, nil, err
+	if p.matchSome(scanner.ON) {
+		resolvedSelector, err := p.selector()
+		if err != nil {
+			return nil, nil, err
+		}
+
+		selector = resolvedSelector
 	}
 
 	return interval, selector, nil
 }
 
-func (p *Parser) implicitSchedule() (Selector, error) {
+func (p *Parser) implicitSchedule() (expr.Selector, error) {
 	selector, err := p.selector()
 	if err != nil {
 		return nil, p.ErrNested("selector", err)
@@ -275,7 +278,7 @@ func (p *Parser) implicitSchedule() (Selector, error) {
 	return selector, nil
 }
 
-func (p *Parser) dateRange() (*DateRange, error) {
+func (p *Parser) dateRange() (*expr.DateRange, error) {
 	if !p.matchSome(scanner.FROM) {
 		return nil, p.ErrExpected("'FROM'", p.peek().Type.String())
 	}
@@ -295,7 +298,7 @@ func (p *Parser) dateRange() (*DateRange, error) {
 		toDate = &date
 	}
 
-	return &DateRange{
+	return &expr.DateRange{
 		From: fromDate,
 		To:   toDate,
 	}, nil
