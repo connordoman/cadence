@@ -62,42 +62,42 @@ func (w *WeekdaysSelector) Accept(v Visitor) (any, error) {
 
 /* Days (MON, TUE, ..., SUN) */
 
-type Day int
+// type Day int
 
-const (
-	Monday Day = iota
-	Tuesday
-	Wednesday
-	Thursday
-	Friday
-	Saturday
-	Sunday
-)
+// const (
+// 	Monday Day = iota
+// 	Tuesday
+// 	Wednesday
+// 	Thursday
+// 	Friday
+// 	Saturday
+// 	Sunday
+// )
 
-func (d Day) String() string {
-	switch d {
-	case Monday:
-		return "MON"
-	case Tuesday:
-		return "TUE"
-	case Wednesday:
-		return "WED"
-	case Thursday:
-		return "THU"
-	case Friday:
-		return "FRI"
-	case Saturday:
-		return "SAT"
-	case Sunday:
-		return "SUN"
-	}
-	return "UNKNOWN"
-}
+// func (d Day) String() string {
+// 	switch d {
+// 	case Monday:
+// 		return "MON"
+// 	case Tuesday:
+// 		return "TUE"
+// 	case Wednesday:
+// 		return "WED"
+// 	case Thursday:
+// 		return "THU"
+// 	case Friday:
+// 		return "FRI"
+// 	case Saturday:
+// 		return "SAT"
+// 	case Sunday:
+// 		return "SUN"
+// 	}
+// 	return "UNKNOWN"
+// }
 
 /* Day List ([MON, TUE, ..., SUN]) */
 
 type DayListSelector struct {
-	Days []Day
+	Days []time.Weekday
 }
 
 func (DayListSelector) isSelector() {}
@@ -127,7 +127,7 @@ func (d Distinction) String() string {
 
 type OrdinalDay struct {
 	Distinction Distinction
-	Day         Day
+	Day         time.Weekday
 }
 
 type OrdinalDayListSelector struct {

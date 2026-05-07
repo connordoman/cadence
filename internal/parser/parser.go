@@ -90,24 +90,24 @@ func (p *Parser) expression() (*expr.Expression, error) {
 	return expression, nil
 }
 
-func (p *Parser) day() (expr.Day, error) {
+func (p *Parser) day() (time.Weekday, error) {
 	if p.matchSome(scanner.MON, scanner.TUE, scanner.WED, scanner.THU, scanner.FRI, scanner.SAT, scanner.SUN) {
 		prev := p.previous()
 		switch prev.Type {
 		case scanner.MON:
-			return expr.Monday, nil
+			return time.Monday, nil
 		case scanner.TUE:
-			return expr.Tuesday, nil
+			return time.Tuesday, nil
 		case scanner.WED:
-			return expr.Wednesday, nil
+			return time.Wednesday, nil
 		case scanner.THU:
-			return expr.Thursday, nil
+			return time.Thursday, nil
 		case scanner.FRI:
-			return expr.Friday, nil
+			return time.Friday, nil
 		case scanner.SAT:
-			return expr.Saturday, nil
+			return time.Saturday, nil
 		case scanner.SUN:
-			return expr.Sunday, nil
+			return time.Sunday, nil
 		default:
 			return -1, fmt.Errorf("invalid day: %s", prev.Type)
 		}
@@ -150,7 +150,7 @@ func (p *Parser) ordinalDay() (*expr.OrdinalDay, error) {
 }
 
 func (p *Parser) dayList() (*expr.DayListSelector, error) {
-	days := []expr.Day{}
+	days := []time.Weekday{}
 
 	first, err := p.day()
 	if err != nil {
