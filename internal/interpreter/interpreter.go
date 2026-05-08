@@ -2,7 +2,6 @@ package interpreter
 
 import (
 	"errors"
-	"log"
 	"time"
 
 	"github.com/connordoman/cadence/internal/expr"
@@ -70,6 +69,49 @@ func (i *Interpreter) evaluate(node expr.Node) (any, error) {
 	return node.Accept(i)
 }
 
+func (i *Interpreter) evaluateOrdinalMonths() ([]time.Time, error) {
+	if i.MonthCount == 0 {
+		return nil, errors.New("ordinal day lists are only supported with month intervals")
+	}
+
+	results := []time.Time{}
+
+	for month := i.From; month.Compare(*i.To) < 0; month = month.AddDate(0, 1, 0) {
+		if i.FirstDays != nil {
+			for firstDay, has := range *i.FirstDays {
+				if !has {
+					continue
+				}
+
+				firstDayOfMonth := firstWeekdayOfMonth(month.Year(), month.Month(), firstDay, month.Location())
+
+				if firstDayOfMonth.Compare(i.From) < 0 {
+					continue
+				}
+				results = append(results, firstDayOfMonth)
+			}
+		}
+
+		if i.LastDays != nil {
+			for lastDay, has := range *i.LastDays {
+				if !has {
+					continue
+				}
+
+				lastDayOfMonth := lastWeekdayOfMonth(month.Year(), month.Month(), lastDay, month.Location())
+
+				if lastDayOfMonth.Compare(*i.To) > 0 {
+					continue
+				}
+
+				results = append(results, lastDayOfMonth)
+			}
+		}
+	}
+
+	return results, nil
+}
+
 func (i *Interpreter) Interpret(expression *expr.Expression) ([]time.Time, error) {
 	result, err := i.evaluate(expression)
 	if err != nil {
@@ -104,17 +146,11 @@ func (i *Interpreter) VisitExpression(expression *expr.Expression) (any, error) 
 		i.To = &to
 	}
 
-	firstDays := i.copyFirstDays()
-	lastDays := i.copyLastDays()
-
-	lastMonth := i.From.Month()
+	if i.FirstDays != nil || i.LastDays != nil {
+		return i.evaluateOrdinalMonths()
+	}
 
 	for date := i.From; date.Compare(*i.To) < 0; date = date.AddDate(0, 0, i.DayCount) {
-		if date.Month() != lastMonth {
-			lastMonth = date.Month()
-			firstDays = i.copyFirstDays()
-			lastDays = i.copyLastDays()
-		}
 
 		if i.MonthCount > 0 {
 			if date.Month()%time.Month(i.MonthCount) != 0 {
@@ -125,22 +161,6 @@ func (i *Interpreter) VisitExpression(expression *expr.Expression) (any, error) 
 		_, week := date.ISOWeek()
 		if i.WeekCount > 0 && week%i.WeekCount != 0 {
 			continue
-		}
-
-		if len(firstDays) > 0 {
-			if has, ok := firstDays[date.Weekday()]; !ok || (has && date.Day() > 7) {
-				continue
-			} else {
-				delete(firstDays, date.Weekday())
-			}
-		}
-
-		if len(lastDays) > 0 {
-			if has, ok := lastDays[date.Weekday()]; !ok || (has && date.AddDate(0, 0, 7).Day() >= date.Day()) {
-				continue
-			} else {
-				delete(lastDays, date.Weekday())
-			}
 		}
 
 		if len(i.Weekdays) > 0 {
@@ -207,8 +227,6 @@ func (i *Interpreter) VisitOrdinalDayList(ordinalDayList *expr.OrdinalDayListSel
 		}
 	}
 
-	log.Println("first days:", i.FirstDays)
-	log.Println("last days:", i.LastDays)
 	return nil, nil
 }
 

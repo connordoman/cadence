@@ -16,9 +16,13 @@ var RootCmd = &cobra.Command{
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		verboseFlag, _ := cmd.Flags().GetBool("verbose")
+		humanReadableFlag, _ := cmd.Flags().GetBool("human-readable")
 
 		if len(args) == 0 {
-			repl(verboseFlag)
+			repl(ReplOptions{
+				Verbose:       verboseFlag,
+				HumanReadable: humanReadableFlag,
+			})
 
 			return nil
 		}
@@ -41,6 +45,7 @@ var RootCmd = &cobra.Command{
 
 func init() {
 	RootCmd.Flags().BoolP("verbose", "v", false, "verbose output")
+	RootCmd.Flags().BoolP("human-readable", "r", false, "human readable output")
 }
 
 func main() {
@@ -49,8 +54,13 @@ func main() {
 	}
 }
 
-func repl(verbose bool) {
-	if verbose {
+type ReplOptions struct {
+	Verbose       bool
+	HumanReadable bool
+}
+
+func repl(options ReplOptions) {
+	if options.Verbose {
 		log.Println("Running in verbose mode")
 	}
 
@@ -68,14 +78,18 @@ func repl(verbose bool) {
 			break
 		}
 		comp := compiler.NewCompiler(line)
-		results, err := comp.Compile(verbose)
+		results, err := comp.Compile(options.Verbose)
 		if err != nil {
 			fmt.Printf("Error: %v\n", err)
 			continue
 		}
 
 		for _, result := range results {
-			fmt.Println(result.Format("2006-01-02"))
+			if options.HumanReadable {
+				fmt.Println(result.Format("Monday, 02 January 2006"))
+			} else {
+				fmt.Println(result.Format("2006-01-02"))
+			}
 		}
 	}
 	fmt.Println("Bye!")
