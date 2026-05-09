@@ -1,13 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"log"
 	"os"
-	"strings"
 
-	"github.com/connordoman/cadence/internal/compiler"
+	"github.com/connordoman/cadence"
+	"github.com/connordoman/cadence/internal/repl"
 	"github.com/spf13/cobra"
 )
 
@@ -19,18 +17,22 @@ var RootCmd = &cobra.Command{
 		humanReadableFlag, _ := cmd.Flags().GetBool("human-readable")
 
 		if len(args) == 0 {
-			repl(ReplOptions{
-				Verbose:       verboseFlag,
-				HumanReadable: humanReadableFlag,
-			})
-
-			return nil
+			r := repl.NewRepl(verboseFlag, humanReadableFlag)
+			return r.Run()
 		}
 
 		input := os.Args[1]
+		jsonFlag, _ := cmd.Flags().GetBool("json")
+		if jsonFlag {
+			json, err := cadence.CompileAsJSON(input)
+			if err != nil {
+				return err
+			}
+			fmt.Println(json)
+			return nil
+		}
 
-		comp := compiler.NewCompiler(input)
-		results, err := comp.Compile(verboseFlag)
+		results, err := cadence.Compile(input)
 		if err != nil {
 			return err
 		}
@@ -46,52 +48,11 @@ var RootCmd = &cobra.Command{
 func init() {
 	RootCmd.Flags().BoolP("verbose", "v", false, "verbose output")
 	RootCmd.Flags().BoolP("human-readable", "r", false, "human readable output")
+	RootCmd.Flags().BoolP("json", "j", false, "output as JSON")
 }
 
 func main() {
 	if err := RootCmd.Execute(); err != nil {
 		os.Exit(1)
 	}
-}
-
-type ReplOptions struct {
-	Verbose       bool
-	HumanReadable bool
-}
-
-func repl(options ReplOptions) {
-	if options.Verbose {
-		log.Println("Running in verbose mode")
-	}
-
-	fmt.Println("Cadence REPL (type 'exit' to quit)")
-	reader := bufio.NewReader(os.Stdin)
-	for {
-		fmt.Print("> ")
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			continue
-		}
-		line = strings.TrimSpace(line)
-		if line == "exit" {
-			break
-		}
-		comp := compiler.NewCompiler(line)
-		results, err := comp.Compile(options.Verbose)
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			continue
-		}
-
-		for _, result := range results {
-			if options.HumanReadable {
-				_, week := result.ISOWeek()
-				fmt.Printf("W%02d: %s\n", week, result.Format("Monday, 02 January 2006"))
-			} else {
-				fmt.Println(result.Format("2006-01-02"))
-			}
-		}
-	}
-	fmt.Println("Bye!")
 }

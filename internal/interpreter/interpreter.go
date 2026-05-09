@@ -136,6 +136,8 @@ func (i *Interpreter) VisitExpression(expression *expr.Expression) (any, error) 
 
 		_, week := date.ISOWeek()
 		if i.WeekCount > 0 && (week-weekOffset)%i.WeekCount != 0 {
+			// weekday := date.Weekday()
+
 			continue
 		}
 

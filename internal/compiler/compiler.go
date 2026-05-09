@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -46,4 +47,37 @@ func (c *Compiler) Compile(verbose bool) ([]time.Time, error) {
 	}
 
 	return results, nil
+}
+
+func Compile(source string) ([]time.Time, error) {
+	comp := NewCompiler(source)
+	results, err := comp.Compile(false)
+	if err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+func CompileAsStringSlice(source string) ([]string, error) {
+	results, err := Compile(source)
+	if err != nil {
+		return nil, err
+	}
+	stringified := []string{}
+	for _, result := range results {
+		stringified = append(stringified, result.Format(time.DateOnly))
+	}
+	return stringified, nil
+}
+
+func CompileAsJSON(source string) (string, error) {
+	results, err := CompileAsStringSlice(source)
+	if err != nil {
+		return "", err
+	}
+	json, err := json.Marshal(results)
+	if err != nil {
+		return "", err
+	}
+	return string(json), nil
 }
