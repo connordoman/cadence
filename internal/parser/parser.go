@@ -284,24 +284,47 @@ func (p *Parser) dateRange() (*expr.DateRange, error) {
 		return nil, p.ErrExpected("'FROM'", p.peek().Type.String())
 	}
 
+	from := expr.DateRangeEnd{
+		Inclusivity: expr.DateRangeInclusive,
+	}
+
 	fromDate, err := p.date()
 	if err != nil {
 		return nil, p.ErrNested("from date", err)
 	}
 
-	var toDate *time.Time
+	from.Date = fromDate
+
+	if p.matchSome(scanner.INCLUSIVE) {
+		// no op
+	} else if p.matchSome(scanner.EXCLUSIVE) {
+		from.Inclusivity = expr.DateRangeExclusive
+	}
+
+	var to *expr.DateRangeEnd
 
 	if p.matchSome(scanner.TO) {
 		date, err := p.date()
 		if err != nil {
 			return nil, p.ErrNested("to date", err)
 		}
-		toDate = &date
+
+		toInclusivity := expr.DateRangeExclusive
+		if p.matchSome(scanner.INCLUSIVE) {
+			toInclusivity = expr.DateRangeInclusive
+		} else if p.matchSome(scanner.EXCLUSIVE) {
+			// no op
+		}
+
+		to = &expr.DateRangeEnd{
+			Date:        date,
+			Inclusivity: toInclusivity,
+		}
 	}
 
 	return &expr.DateRange{
-		From: fromDate,
-		To:   toDate,
+		From: from,
+		To:   to,
 	}, nil
 }
 

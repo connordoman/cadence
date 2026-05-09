@@ -7,7 +7,10 @@ expression
   -> "EVERY" ( implicit_schedule | explicit_schedule ) [ date_range ] ;
 
 date_range
-  -> "FROM" DATE [ "TO" DATE ] ;
+  -> "FROM" DATE [ inclusivity ] [ "TO" DATE [ inclusivity ]] ;
+
+inclusivity
+  -> "INCLUSIVE" | "EXCLUSIVE" | "INC" | "EXC"
 
 implicit_schedule
   -> selector ;

@@ -112,6 +112,42 @@ func TestScanner(t *testing.T) {
 			},
 			expectedError: nil,
 		},
+		{
+			name:  "keyword inclusive",
+			input: "INCLUSIVE",
+			expectedTokens: []scanner.Token{
+				{Type: scanner.INCLUSIVE, Lexeme: "INCLUSIVE", Literal: nil, Line: 1},
+				EOFToken,
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "keyword exclusive",
+			input: "EXCLUSIVE",
+			expectedTokens: []scanner.Token{
+				{Type: scanner.EXCLUSIVE, Lexeme: "EXCLUSIVE", Literal: nil, Line: 1},
+				EOFToken,
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "shorthand inclusive",
+			input: "INC",
+			expectedTokens: []scanner.Token{
+				{Type: scanner.INCLUSIVE, Lexeme: "INC", Literal: nil, Line: 1},
+				EOFToken,
+			},
+			expectedError: nil,
+		},
+		{
+			name:  "shorthand exclusive",
+			input: "EXC",
+			expectedTokens: []scanner.Token{
+				{Type: scanner.EXCLUSIVE, Lexeme: "EXC", Literal: nil, Line: 1},
+				EOFToken,
+			},
+			expectedError: nil,
+		},
 	}
 
 	for _, test := range tests {

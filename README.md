@@ -99,7 +99,7 @@ The _date range_ is used to limit the span of the output. Date ranges are option
   - Begins at `<date>`, and continues for one year
 - Closed
   - `FROM <date 1> TO <date 2>`
-  - Range ends at `<date 2>`, **exclusive**
+  - Range ends at `<date 2>` and is **exclusive**, unless `INCLUSIVE` is specified
 
 > [!IMPORTANT]
 > If no date range is specified, the default is `FROM <now> TO <now + 1 year>`.

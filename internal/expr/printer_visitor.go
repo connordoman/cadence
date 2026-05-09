@@ -100,12 +100,12 @@ func (p *Printer) VisitOrdinalDayList(o *OrdinalDayListSelector) (any, error) {
 
 func (p *Printer) VisitDateRange(d *DateRange) (any, error) {
 	var result strings.Builder
-	from := d.From.Format("02-01-2006")
-	fmt.Fprintf(&result, "%s", from)
+	from := d.From.Date.Format("02-01-2006")
+	fmt.Fprintf(&result, "%s %s", from, d.From.Inclusivity.String())
 	to := ""
 	if d.To != nil {
-		to = d.To.Format("02-01-2006")
-		fmt.Fprintf(&result, "...%s", to)
+		to = d.To.Date.Format("02-01-2006")
+		fmt.Fprintf(&result, "..%s %s", to, d.To.Inclusivity.String())
 	}
 	return "[DATE RANGE: " + result.String() + "]", nil
 }

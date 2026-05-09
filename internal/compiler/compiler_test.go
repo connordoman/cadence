@@ -71,6 +71,62 @@ func TestCompile(t *testing.T) {
 				"2026-01-26", "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30", "2026-01-31",
 			),
 		},
+		{
+			name:  "inclusive date range end",
+			input: "EVERY DAY FROM 2026-01-01 TO 2026-01-07 INCLUSIVE",
+			expectedResults: buildTimeArray(
+				"2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06", "2026-01-07",
+			),
+		},
+		{
+			name:  "inclusive date range end shorthand",
+			input: "EVERY DAY FROM 2026-01-01 TO 2026-01-07 INC",
+			expectedResults: buildTimeArray(
+				"2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06", "2026-01-07",
+			),
+		},
+		{
+			name:  "exclusive date range start",
+			input: "EVERY DAY FROM 2026-01-01 EXCLUSIVE TO 2026-01-07",
+			expectedResults: buildTimeArray(
+				"2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06",
+			),
+		},
+		{
+			name:  "exclusive date range start shorthand",
+			input: "EVERY DAY FROM 2026-01-01 EXC TO 2026-01-07",
+			expectedResults: buildTimeArray(
+				"2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06",
+			),
+		},
+		{
+			name:  "exclusive date range end",
+			input: "EVERY DAY FROM 2026-01-01 TO 2026-01-07 EXCLUSIVE",
+			expectedResults: buildTimeArray(
+				"2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06",
+			),
+		},
+		{
+			name:  "exclusive date range end shorthand",
+			input: "EVERY DAY FROM 2026-01-01 TO 2026-01-07 EXC",
+			expectedResults: buildTimeArray(
+				"2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06",
+			),
+		},
+		{
+			name:  "exclusive date range",
+			input: "EVERY DAY FROM 2026-01-01 EXCLUSIVE TO 2026-01-07 EXCLUSIVE",
+			expectedResults: buildTimeArray(
+				"2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06",
+			),
+		},
+		{
+			name:  "exclusive date range shorthand",
+			input: "EVERY DAY FROM 2026-01-01 EXC TO 2026-01-07 EXC",
+			expectedResults: buildTimeArray(
+				"2026-01-02", "2026-01-03", "2026-01-04", "2026-01-05", "2026-01-06",
+			),
+		},
 	}
 
 	for _, test := range tests {
@@ -83,7 +139,7 @@ func TestCompile(t *testing.T) {
 			}
 
 			if len(results) != len(test.expectedResults) {
-				t.Errorf("expected %d results, got %d", len(test.expectedResults), len(results))
+				t.Errorf("expected %d results, got %d: wanted %v got %v", len(test.expectedResults), len(results), test.expectedResults, results)
 				return
 			}
 

@@ -32,6 +32,8 @@ const (
 	TO
 	FIRST
 	LAST
+	INCLUSIVE
+	EXCLUSIVE
 )
 
 func (t TokenType) String() string {
@@ -78,6 +80,10 @@ func (t TokenType) String() string {
 		return "FIRST"
 	case LAST:
 		return "LAST"
+	case INCLUSIVE:
+		return "INCLUSIVE"
+	case EXCLUSIVE:
+		return "EXCLUSIVE"
 	default:
 		return "UNKNOWN"
 	}
