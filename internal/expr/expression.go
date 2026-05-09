@@ -142,9 +142,31 @@ func (o *OrdinalDayListSelector) Accept(v Visitor) (any, error) {
 
 /* Date Range (FROM date, TO date) */
 
+type DateRangeInclusivity int
+
+const (
+	DateRangeInclusive DateRangeInclusivity = iota
+	DateRangeExclusive
+)
+
+func (d DateRangeInclusivity) String() string {
+	switch d {
+	case DateRangeInclusive:
+		return "INCLUSIVE"
+	case DateRangeExclusive:
+		return "EXCLUSIVE"
+	}
+	return "UNKNOWN"
+}
+
+type DateRangeEnd struct {
+	Date        time.Time
+	Inclusivity DateRangeInclusivity
+}
+
 type DateRange struct {
-	From time.Time
-	To   *time.Time
+	From DateRangeEnd
+	To   *DateRangeEnd
 }
 
 func (d *DateRange) Accept(v Visitor) (any, error) {
