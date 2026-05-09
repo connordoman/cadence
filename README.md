@@ -13,7 +13,7 @@ go get github.com/connordoman/cadence
 You can play around with interpreter using the [Cadence REPL](https://github.com/connordoman/cadence-repl):
 
 ```sh
-go run github.com/connordoman/cadence-repl@v0.0.1
+go run github.com/connordoman/cadence-repl@v0.0.2
 ```
 
 ## Usage
