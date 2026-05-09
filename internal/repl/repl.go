@@ -3,6 +3,7 @@ package repl
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -11,6 +12,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/connordoman/cadence/internal/compiler"
 	"github.com/connordoman/windy"
+	"github.com/ergochat/readline"
+	"golang.org/x/term"
 )
 
 const replPrompt = ">>> "
@@ -54,6 +57,25 @@ func (r *Repl) formatDate(date time.Time) string {
 	return date.Format("2006-01-02")
 }
 
+func (r *Repl) handleLine(line string) (quit bool) {
+	line = strings.TrimSpace(line)
+	if line == "exit" {
+		return true
+	}
+
+	comp := compiler.NewCompiler(line)
+	results, err := comp.Compile(r.Verbose)
+	if err != nil {
+		r.report(err, "error compiling expression")
+		return false
+	}
+
+	for _, result := range results {
+		fmt.Println(r.formatDate(result))
+	}
+	return false
+}
+
 func (r *Repl) Run() error {
 	r.log("Running in verbose mode")
 
@@ -62,29 +84,61 @@ func (r *Repl) Run() error {
 	}
 
 	fmt.Println("Cadence REPL (type 'exit' to quit)")
+
+	if term.IsTerminal(int(os.Stdin.Fd())) {
+		if err := r.runInteractive(); err != nil {
+			return err
+		}
+	} else {
+		r.runLineOriented()
+	}
+
+	fmt.Println("Bye!")
+	return nil
+}
+
+func (r *Repl) runInteractive() error {
+	rl, err := readline.NewFromConfig(&readline.Config{
+		Prompt: replStyle.Render(replPrompt),
+	})
+	if err != nil {
+		return fmt.Errorf("repl: readline: %w", err)
+	}
+	defer rl.Close()
+
+	for {
+		line, err := rl.Readline()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			if err == readline.ErrInterrupt {
+				continue
+			}
+			r.report(err, "error reading input")
+			continue
+		}
+		if r.handleLine(line) {
+			break
+		}
+	}
+	return nil
+}
+
+func (r *Repl) runLineOriented() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Print(replStyle.Render(replPrompt))
 		line, err := reader.ReadString('\n')
 		if err != nil {
+			if err == io.EOF {
+				break
+			}
 			r.report(err, "error reading input")
 			continue
 		}
-		line = strings.TrimSpace(line)
-		if line == "exit" {
+		if r.handleLine(line) {
 			break
 		}
-		comp := compiler.NewCompiler(line)
-		results, err := comp.Compile(r.Verbose)
-		if err != nil {
-			r.report(err, "error compiling expression")
-			continue
-		}
-
-		for _, result := range results {
-			fmt.Println(r.formatDate(result))
-		}
 	}
-	fmt.Println("Bye!")
-	return nil
 }
