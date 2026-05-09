@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/connordoman/cadence/internal/expr"
@@ -332,12 +333,7 @@ func (p *Parser) check(tokenType scanner.TokenType) bool {
 }
 
 func (p *Parser) checkSome(tokenTypes ...scanner.TokenType) bool {
-	for _, tokenType := range tokenTypes {
-		if p.check(tokenType) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(tokenTypes, p.check)
 }
 
 func (p *Parser) advance() scanner.Token {

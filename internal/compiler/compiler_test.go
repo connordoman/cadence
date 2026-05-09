@@ -23,17 +23,17 @@ func TestCompile(t *testing.T) {
 	}{
 		{
 			name:            "simple every monday",
-			input:           "EVERY MON FROM 01-01-2026 TO 01-02-2026",
+			input:           "EVERY MON FROM 2026-01-01 TO 2026-02-01",
 			expectedResults: buildTimeArray("2026-01-05", "2026-01-12", "2026-01-19", "2026-01-26"),
 		},
 		{
 			name:            "simple every week",
-			input:           "EVERY MON, TUE FROM 01-01-2026 TO 01-02-2026",
+			input:           "EVERY MON, TUE FROM 2026-01-01 TO 2026-02-01",
 			expectedResults: buildTimeArray("2026-01-05", "2026-01-06", "2026-01-12", "2026-01-13", "2026-01-19", "2026-01-20", "2026-01-26", "2026-01-27"),
 		},
 		{
 			name:  "simple every weekday",
-			input: "EVERY WEEKDAY FROM 01-01-2026 TO 01-02-2026",
+			input: "EVERY WEEKDAY FROM 2026-01-01 TO 2026-02-01",
 			expectedResults: buildTimeArray(
 				"2026-01-01", "2026-01-02",
 				"2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09",
@@ -44,7 +44,7 @@ func TestCompile(t *testing.T) {
 		},
 		{
 			name:  "simple every day",
-			input: "EVERY DAY FROM 01-01-2026 TO 01-02-2026",
+			input: "EVERY DAY FROM 2026-01-01 TO 2026-02-01",
 			expectedResults: buildTimeArray(
 				"2026-01-01", "2026-01-02", "2026-01-03", "2026-01-04",
 				"2026-01-05", "2026-01-06", "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-10", "2026-01-11",
@@ -55,7 +55,7 @@ func TestCompile(t *testing.T) {
 		},
 		{
 			name:  "simple every 2 days",
-			input: "EVERY 2 DAYS FROM 01-01-2026 TO 01-02-2026",
+			input: "EVERY 2 DAYS FROM 2026-01-01 TO 2026-02-01",
 			expectedResults: buildTimeArray(
 				"2026-01-01", "2026-01-03", "2026-01-05", "2026-01-07", "2026-01-09", "2026-01-11",
 				"2026-01-13", "2026-01-15", "2026-01-17", "2026-01-19", "2026-01-21", "2026-01-23",

@@ -88,15 +88,20 @@ func (s *Scanner) scanToken() error {
 	switch char {
 	case ',':
 		s.emptyToken(COMMA)
-	// case '-':
-	// 	s.emptyToken(HYPHEN)
 	case ' ', '\r', '\t':
 		break
 	case '\n':
 		s.line++
 	default:
 		if s.isDigit(char) {
-			if s.isDigit(s.peek()) && s.peekNext() == '-' {
+			length := 1
+			for s.isDigit(s.peekAhead(length)) {
+				length++
+				if length > 3 {
+					break
+				}
+			}
+			if length == 3 && s.peekAhead(length) == '-' {
 				return s.date()
 			} else {
 				return s.integer()
@@ -104,7 +109,7 @@ func (s *Scanner) scanToken() error {
 		} else if s.isAlpha(char) {
 			return s.keyword()
 		} else {
-			return ErrUnexpectedChar
+			return s.report(ErrUnexpectedChar, "'%s'", string(char))
 		}
 	}
 
@@ -139,8 +144,10 @@ func (s *Scanner) integer() error {
 }
 
 func (s *Scanner) date() error {
-	// consume day
-	s.advance() // second digit of day
+	// consume year
+	s.advance() // second digit of year
+	s.advance() // third digit of year
+	s.advance() // fourth digit of year
 	s.advance() // hyphen
 
 	// consume month
@@ -156,15 +163,16 @@ func (s *Scanner) date() error {
 		return s.report(ErrInvalidDate, "expected '-', got '%s'", string(got))
 	}
 
-	// consume year
-	for range 4 {
-		if !s.isDigit(s.peek()) {
-			return s.report(ErrInvalidDate, "invalid year: expected digit")
-		}
-		s.advance()
+	// consume day
+	dayFirstDigit := s.peek()
+	daySecondDigit := s.peekNext()
+	if !s.isDigit(dayFirstDigit) || !s.isDigit(daySecondDigit) {
+		return s.report(ErrInvalidDate, "invalid day: '%s%s'", string(dayFirstDigit), string(daySecondDigit))
 	}
+	s.advance() // first digit of day
+	s.advance() // second digit of day
 
-	date, err := time.Parse("02-01-2006", s.source[s.start:s.current])
+	date, err := time.Parse(time.DateOnly, s.source[s.start:s.current])
 	if err != nil {
 		return s.report(ErrInvalidDate, "invalid date: %v", err)
 	}

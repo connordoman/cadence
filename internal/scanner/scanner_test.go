@@ -31,26 +31,26 @@ func TestScanner(t *testing.T) {
 		},
 		{
 			name:  "simple date",
-			input: "01-01-2026",
+			input: "2026-01-01",
 			expectedTokens: []scanner.Token{
-				{Type: scanner.DATE, Lexeme: "01-01-2026", Literal: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), Line: 1},
+				{Type: scanner.DATE, Lexeme: "2026-01-01", Literal: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), Line: 1},
 				EOFToken,
 			},
 			expectedError: nil,
 		},
 		{
 			name:  "digit then date",
-			input: "123 01-01-2026",
+			input: "123 2026-01-01",
 			expectedTokens: []scanner.Token{
 				{Type: scanner.INTEGER, Lexeme: "123", Literal: 123, Line: 1},
-				{Type: scanner.DATE, Lexeme: "01-01-2026", Literal: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), Line: 1},
+				{Type: scanner.DATE, Lexeme: "2026-01-01", Literal: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), Line: 1},
 				EOFToken,
 			},
 			expectedError: nil,
 		},
 		{
 			name:           "impossible date",
-			input:          "32-01-2026",
+			input:          "2026-01-32",
 			expectedTokens: nil,
 			expectedError:  scanner.ErrInvalidDate,
 		},

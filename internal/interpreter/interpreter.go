@@ -27,8 +27,8 @@ func NewInterpreter() *Interpreter {
 	return &Interpreter{
 		Weekdays: Weekdays{},
 
-		FirstDays: &Weekdays{},
-		LastDays:  &Weekdays{},
+		FirstDays: nil,
+		LastDays:  nil,
 
 		MonthCount: 0,
 		WeekCount:  0,
@@ -37,32 +37,6 @@ func NewInterpreter() *Interpreter {
 		From: time.Now(),
 		To:   nil,
 	}
-}
-
-func (i *Interpreter) copyFirstDays() Weekdays {
-	if i.FirstDays == nil {
-		return nil
-	}
-
-	firstDays := Weekdays{}
-	for day := range *i.FirstDays {
-		firstDays[day] = true
-	}
-
-	return firstDays
-}
-
-func (i *Interpreter) copyLastDays() Weekdays {
-	if i.LastDays == nil {
-		return nil
-	}
-
-	lastDays := Weekdays{}
-	for day := range *i.LastDays {
-		lastDays[day] = true
-	}
-
-	return lastDays
 }
 
 func (i *Interpreter) evaluate(node expr.Node) (any, error) {
