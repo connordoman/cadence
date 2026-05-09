@@ -8,6 +8,14 @@ Cadence is an open-source DSL for generating ISO 8601 dates based on a simple, S
 go get github.com/connordoman/cadence
 ```
 
+## Try it Out
+
+You can play around with interpreter using the [Cadence REPL](https://github.com/connordoman/cadence-repl):
+
+```sh
+go run github.com/connordoman/cadence-repl@v0.0.1
+```
+
 ## Usage
 
 ```go
