@@ -115,11 +115,6 @@ func (i *Interpreter) VisitExpression(expression *expr.Expression) (any, error) 
 		i.evaluate(expression.DateRange)
 	}
 
-	if i.To == nil {
-		to := i.From.AddDate(1, 0, 0)
-		i.To = &to
-	}
-
 	if i.FirstDays != nil || i.LastDays != nil {
 		return i.evaluateOrdinalMonths()
 	}
@@ -209,7 +204,18 @@ func (i *Interpreter) VisitOrdinalDayList(ordinalDayList *expr.OrdinalDayListSel
 }
 
 func (i *Interpreter) VisitDateRange(dateRange *expr.DateRange) (any, error) {
-	i.From = dateRange.From
-	i.To = dateRange.To
+	i.From = dateRange.From.Date
+	if dateRange.From.Inclusivity == expr.DateRangeExclusive {
+		i.From = i.From.AddDate(0, 0, 1)
+	}
+
+	i.To = &dateRange.To.Date
+	if i.To == nil {
+		to := dateRange.From.Date.AddDate(1, 0, 0)
+		i.To = &to
+	}
+	if dateRange.To.Inclusivity == expr.DateRangeInclusive {
+		*i.To = (*i.To).AddDate(0, 0, 1)
+	}
 	return nil, nil
 }
