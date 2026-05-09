@@ -124,6 +124,8 @@ func (i *Interpreter) VisitExpression(expression *expr.Expression) (any, error) 
 		return i.evaluateOrdinalMonths()
 	}
 
+	_, weekOffset := i.From.ISOWeek()
+
 	for date := i.From; date.Compare(*i.To) < 0; date = date.AddDate(0, 0, i.DayCount) {
 
 		if i.MonthCount > 0 {
@@ -133,7 +135,7 @@ func (i *Interpreter) VisitExpression(expression *expr.Expression) (any, error) 
 		}
 
 		_, week := date.ISOWeek()
-		if i.WeekCount > 0 && week%i.WeekCount != 0 {
+		if i.WeekCount > 0 && (week-weekOffset)%i.WeekCount != 0 {
 			continue
 		}
 

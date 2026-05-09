@@ -86,7 +86,8 @@ func repl(options ReplOptions) {
 
 		for _, result := range results {
 			if options.HumanReadable {
-				fmt.Println(result.Format("Monday, 02 January 2006"))
+				_, week := result.ISOWeek()
+				fmt.Printf("W%02d: %s\n", week, result.Format("Monday, 02 January 2006"))
 			} else {
 				fmt.Println(result.Format("2006-01-02"))
 			}

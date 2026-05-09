@@ -91,9 +91,9 @@ func (p *Printer) VisitDayList(d *DayListSelector) (any, error) {
 func (p *Printer) VisitOrdinalDayList(o *OrdinalDayListSelector) (any, error) {
 	var parts []string
 	for _, item := range o.Items {
-		parts = append(parts, fmt.Sprintf("%s %s", item.Distinction.String(), item.Day.String()))
+		parts = append(parts, fmt.Sprintf("[%s %s]", item.Distinction.String(), item.Day.String()))
 	}
-	return "[ORDINAL DAY LIST: " + strings.Join(parts, ", ") + "]", nil
+	return "[ORDINAL DAY LIST: " + strings.Join(parts, " ") + "]", nil
 }
 
 // Date Range

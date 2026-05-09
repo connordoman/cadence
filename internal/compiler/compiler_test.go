@@ -62,6 +62,13 @@ func TestCompile(t *testing.T) {
 				"2026-01-25", "2026-01-27", "2026-01-29", "2026-01-31",
 			),
 		},
+		{
+			name:  "simple every 2 weeks",
+			input: "EVERY 2 WEEKS FROM 2026-01-01 TO 2026-02-01",
+			expectedResults: buildTimeArray(
+				"2026-01-01", "2026-01-15", "2026-01-29",
+			),
+		},
 	}
 
 	for _, test := range tests {
