@@ -296,9 +296,9 @@ func (p *Parser) dateRange() (*expr.DateRange, error) {
 	from.Date = fromDate
 
 	if p.matchSome(scanner.INCLUSIVE) {
-		from.Inclusivity = expr.DateRangeInclusive
-	} else if p.matchSome(scanner.EXCLUSIVE) {
 		// no op
+	} else if p.matchSome(scanner.EXCLUSIVE) {
+		from.Inclusivity = expr.DateRangeExclusive
 	}
 
 	var to *expr.DateRangeEnd
